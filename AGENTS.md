@@ -67,6 +67,51 @@ switch (updater.state) {
 }
 ```
 
+## Wiring the bottom-tab shell (`AppShell`)
+
+`AppShell` is the shared bottom-navigation scaffold. It owns the
+`NavigationBar` and an `IndexedStack` body so each tab keeps its state
+across switches. The host app keeps full control of the AppBar and the
+update banner.
+
+```dart
+Scaffold(
+  // …or just return AppShell directly if you don't need an outer Scaffold.
+)
+AppShell(
+  showAppBar: true, // optional — uses the current tab's label as title
+  bannerAboveBody: UpdateBanner(updater: updater, style: AppTheme.bannerStyle),
+  tabs: const [
+    AppShellTab(
+      label: 'Live',
+      icon: Icons.mic_none,
+      selectedIcon: Icons.mic,
+      body: LiveScreen(),
+    ),
+    AppShellTab(
+      label: 'Recordings',
+      icon: Icons.fiber_manual_record_outlined,
+      selectedIcon: Icons.fiber_manual_record,
+      body: RecordingsScreen(),
+    ),
+  ],
+)
+```
+
+Rules:
+
+- **Always set `selectedIcon`** unless the unselected and selected glyphs
+  are identical. Material 3 expects the visual hint.
+- **Tab bodies are kept alive** via `IndexedStack`. Do not put expensive
+  `initState` work inside a body that the user may not visit — it still
+  runs on first mount, but it survives every switch after that.
+- **Do not nest a second `Scaffold` inside an `AppShellTab.body`.** Use
+  a plain widget (or a custom AppBar on the body if you really need a
+  per-tab one — but prefer `AppShell.showAppBar`).
+- **The banner slot is for one persistent widget**, typically
+  `UpdateBanner`. If you need to show a snackbar/dialog, route it
+  through the surrounding `Scaffold`/`Overlay`, not the shell.
+
 ## Bumping `jirip_app`
 
 1. Edit `packages/jirip_app/pubspec.yaml` → `version:`.

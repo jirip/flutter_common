@@ -10,7 +10,7 @@ workflow, and the same release-publisher dispatch step into every repo.
 
 | Path | Purpose |
 | --- | --- |
-| `packages/jirip_app/` | Dart package with the in-app self-updater (`Updater`) and the global update banner (`UpdateBanner`). |
+| `packages/jirip_app/` | Dart package: in-app self-updater (`Updater`), global update banner (`UpdateBanner`), bottom-tab scaffold (`AppShell`). |
 | `actions/flutter-android-release/` | (Planned.) Composite GitHub Action that wraps the standard build → sign → release → dispatch steps. |
 | `AGENTS.md` | Terse usage rules for AI coding agents (what to import, how to wire it). |
 
@@ -18,7 +18,7 @@ workflow, and the same release-publisher dispatch step into every repo.
 
 | Component | Version | First consumer |
 | --- | --- | --- |
-| `jirip_app` Dart package | 0.1.0 | voicer |
+| `jirip_app` Dart package | 0.2.0 | voicer |
 | `flutter-android-release` action | not yet built | — |
 
 ## Quick start: add the updater to a new Flutter Android app
