@@ -50,28 +50,25 @@ class Updater extends ChangeNotifier {
   /// [UpdateError] stays out because transient network failures are better
   /// surfaced inside a Settings row than on a global banner.
   bool get shouldShowBanner {
-    final current = _state;
-    if (current is UpdateAvailable) {
-      return !_dismissedVersions.contains(current.version);
-    }
-    if (current is UpdateReadyToInstall) {
-      return !_dismissedVersions.contains(current.version);
-    }
-    return current is UpdateDownloading;
+    final dismissible = _dismissibleVersion;
+    if (dismissible != null) return !_dismissedVersions.contains(dismissible);
+    return _state is UpdateDownloading;
   }
 
   /// Suppress the banner for the current process. The user can still open
   /// Settings and explicitly install the same version.
   void dismissCurrent() {
-    final current = _state;
-    if (current is UpdateAvailable) {
-      _dismissedVersions.add(current.version);
-      notifyListeners();
-    } else if (current is UpdateReadyToInstall) {
-      _dismissedVersions.add(current.version);
-      notifyListeners();
-    }
+    final dismissible = _dismissibleVersion;
+    if (dismissible == null) return;
+    _dismissedVersions.add(dismissible);
+    notifyListeners();
   }
+
+  String? get _dismissibleVersion => switch (_state) {
+    UpdateAvailable(:final version) => version,
+    UpdateReadyToInstall(:final version) => version,
+    _ => null,
+  };
 
   Future<String> currentVersion() async {
     if (_currentVersion != null) return _currentVersion!;
@@ -112,9 +109,9 @@ class Updater extends ChangeNotifier {
       final notes = latest['notes'] as String?;
       final assets = (latest['assets'] as List?) ?? const [];
       final apkAsset = assets.cast<Map<String, dynamic>>().firstWhere(
-            (a) => (a['name'] as String? ?? '').endsWith('.apk'),
-            orElse: () => const <String, dynamic>{},
-          );
+        (a) => (a['name'] as String? ?? '').endsWith('.apk'),
+        orElse: () => const <String, dynamic>{},
+      );
       if (apkAsset.isEmpty) {
         _set(const UpdateUpToDate());
         return;
@@ -124,17 +121,21 @@ class Updater extends ChangeNotifier {
       if (_compareVersions(latestVersion, current) > 0) {
         final cached = await _apkFileFor(latestVersion);
         if (cached.existsSync() && cached.lengthSync() > 0) {
-          _set(UpdateReadyToInstall(
-            version: latestVersion,
-            apkPath: cached.path,
-            notes: notes,
-          ));
+          _set(
+            UpdateReadyToInstall(
+              version: latestVersion,
+              apkPath: cached.path,
+              notes: notes,
+            ),
+          );
         } else {
-          _set(UpdateAvailable(
-            version: latestVersion,
-            assetUrl: url,
-            notes: notes,
-          ));
+          _set(
+            UpdateAvailable(
+              version: latestVersion,
+              assetUrl: url,
+              notes: notes,
+            ),
+          );
         }
       } else {
         _set(const UpdateUpToDate());
@@ -153,7 +154,10 @@ class Updater extends ChangeNotifier {
 
     if (apkFile.existsSync() && apkFile.lengthSync() > 0) {
       await _launchInstallerFor(
-          available.version, apkFile.path, available.notes);
+        available.version,
+        apkFile.path,
+        available.notes,
+      );
       return;
     }
 
@@ -173,16 +177,21 @@ class Updater extends ChangeNotifier {
         sink.add(chunk);
         received += chunk.length;
         if (total > 0) {
-          _set(UpdateDownloading(
-            version: available.version,
-            progress: received / total,
-          ));
+          _set(
+            UpdateDownloading(
+              version: available.version,
+              progress: received / total,
+            ),
+          );
         }
       }).asFuture<void>();
       await sink.close();
 
       await _launchInstallerFor(
-          available.version, apkFile.path, available.notes);
+        available.version,
+        apkFile.path,
+        available.notes,
+      );
     } catch (e) {
       _set(UpdateError(e.toString()));
     }
@@ -202,7 +211,10 @@ class Updater extends ChangeNotifier {
   }
 
   Future<void> _launchInstallerFor(
-      String version, String apkPath, String? notes) async {
+    String version,
+    String apkPath,
+    String? notes,
+  ) async {
     final result = await OpenFilex.open(
       apkPath,
       type: 'application/vnd.android.package-archive',
@@ -211,11 +223,9 @@ class Updater extends ChangeNotifier {
       _set(UpdateError('Install handoff: ${result.message}'));
       return;
     }
-    _set(UpdateReadyToInstall(
-      version: version,
-      apkPath: apkPath,
-      notes: notes,
-    ));
+    _set(
+      UpdateReadyToInstall(version: version, apkPath: apkPath, notes: notes),
+    );
   }
 
   void _set(UpdateState next) {

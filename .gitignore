@@ -10,3 +10,7 @@
 .packages
 build/
 pubspec.lock
+
+# Python
+__pycache__/
+*.pyc

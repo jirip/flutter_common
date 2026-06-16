@@ -9,10 +9,7 @@ import 'updater.dart';
 class UpdateBannerStyle {
   final Color background;
   final Color foreground;
-  const UpdateBannerStyle({
-    required this.background,
-    required this.foreground,
-  });
+  const UpdateBannerStyle({required this.background, required this.foreground});
 }
 
 /// Inline update banner. Renders at most one of:
@@ -22,79 +19,55 @@ class UpdateBannerStyle {
 ///
 /// All other [UpdateState]s collapse to a zero-size widget so the consumer
 /// can drop this above a [Scaffold]'s body without conditional layout.
-class UpdateBanner extends StatefulWidget {
+class UpdateBanner extends StatelessWidget {
   final Updater updater;
   final UpdateBannerStyle style;
-  const UpdateBanner({
-    super.key,
-    required this.updater,
-    required this.style,
-  });
-
-  @override
-  State<UpdateBanner> createState() => _UpdateBannerState();
-}
-
-class _UpdateBannerState extends State<UpdateBanner> {
-  @override
-  void initState() {
-    super.initState();
-    widget.updater.addListener(_refresh);
-  }
-
-  @override
-  void dispose() {
-    widget.updater.removeListener(_refresh);
-    super.dispose();
-  }
-
-  void _refresh() {
-    if (mounted) setState(() {});
-  }
+  const UpdateBanner({super.key, required this.updater, required this.style});
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.updater.shouldShowBanner) return const SizedBox.shrink();
-    final state = widget.updater.state;
+    return ListenableBuilder(
+      listenable: updater,
+      builder: (context, _) {
+        if (!updater.shouldShowBanner) return const SizedBox.shrink();
+        final content = switch (updater.state) {
+          final UpdateAvailable state => _AvailableContent(
+            updater: updater,
+            state: state,
+            style: style,
+          ),
+          final UpdateDownloading state => _DownloadingContent(
+            state: state,
+            style: style,
+          ),
+          final UpdateReadyToInstall state => _ReadyContent(
+            updater: updater,
+            state: state,
+            style: style,
+          ),
+          UpdateIdle() ||
+          UpdateChecking() ||
+          UpdateUpToDate() ||
+          UpdateError() => const SizedBox.shrink(),
+        };
 
-    final Widget content;
-    switch (state) {
-      case UpdateAvailable():
-        content = _AvailableContent(
-          updater: widget.updater,
-          state: state,
-          style: widget.style,
-        );
-      case UpdateDownloading():
-        content = _DownloadingContent(state: state, style: widget.style);
-      case UpdateReadyToInstall():
-        content = _ReadyContent(
-          updater: widget.updater,
-          state: state,
-          style: widget.style,
-        );
-      case UpdateIdle() ||
-            UpdateChecking() ||
-            UpdateUpToDate() ||
-            UpdateError():
-        return const SizedBox.shrink();
-    }
-
-    return Material(
-      color: widget.style.background,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: DefaultTextStyle.merge(
-            style: TextStyle(color: widget.style.foreground),
-            child: IconTheme.merge(
-              data: IconThemeData(color: widget.style.foreground),
-              child: content,
+        return Material(
+          color: style.background,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: DefaultTextStyle.merge(
+                style: TextStyle(color: style.foreground),
+                child: IconTheme.merge(
+                  data: IconThemeData(color: style.foreground),
+                  child: content,
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -192,9 +165,7 @@ class _DownloadingContent extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          child: Text('Downloading v${state.version}… $percent%'),
-        ),
+        Expanded(child: Text('Downloading v${state.version}… $percent%')),
       ],
     );
   }
