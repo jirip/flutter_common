@@ -1,7 +1,7 @@
 name: jirip_app
 description: Shared infrastructure for Jirip's private Flutter Android apps — self-updater, update banner.
 publish_to: none
-version: 0.2.0
+version: 0.3.0
 
 environment:
   sdk: ^3.12.0

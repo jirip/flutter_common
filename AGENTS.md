@@ -75,11 +75,10 @@ across switches. The host app keeps full control of the AppBar and the
 update banner.
 
 ```dart
-Scaffold(
-  // …or just return AppShell directly if you don't need an outer Scaffold.
-)
 AppShell(
-  showAppBar: true, // optional — uses the current tab's label as title
+  // showAppBar: true renders an AppBar with `<appName> v<version>` from
+  // PackageInfo. Override with `appBar:` for a custom one.
+  showAppBar: true,
   bannerAboveBody: UpdateBanner(updater: updater, style: AppTheme.bannerStyle),
   tabs: const [
     AppShellTab(
@@ -107,7 +106,10 @@ Rules:
   runs on first mount, but it survives every switch after that.
 - **Do not nest a second `Scaffold` inside an `AppShellTab.body`.** Use
   a plain widget (or a custom AppBar on the body if you really need a
-  per-tab one — but prefer `AppShell.showAppBar`).
+  per-tab one — but prefer `AppShell.showAppBar` or `AppShell.appBar`).
+- **The default AppBar shows `<appName> v<version>` from `PackageInfo`** —
+  the version is the clean semver, with no build number. No app-side
+  wiring needed. Pass `appBar:` to override entirely.
 - **The banner slot is for one persistent widget**, typically
   `UpdateBanner`. If you need to show a snackbar/dialog, route it
   through the surrounding `Scaffold`/`Overlay`, not the shell.

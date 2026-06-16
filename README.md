@@ -18,7 +18,7 @@ workflow, and the same release-publisher dispatch step into every repo.
 
 | Component | Version | First consumer |
 | --- | --- | --- |
-| `jirip_app` Dart package | 0.2.0 | voicer |
+| `jirip_app` Dart package | 0.3.0 | voicer |
 | `flutter-android-release` action | not yet built | — |
 
 ## Quick start: add the updater to a new Flutter Android app

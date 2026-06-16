@@ -71,7 +71,7 @@ void main() {
       expect(find.text('count:2'), findsOneWidget);
     });
 
-    testWidgets('showAppBar renders an AppBar with the current tab label', (
+    testWidgets('showAppBar renders the default app-name AppBar', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -86,12 +86,30 @@ void main() {
         ),
       );
 
-      expect(find.widgetWithText(AppBar, 'Alpha'), findsOneWidget);
+      expect(find.byType(AppBar), findsOneWidget);
+      // Tab label is NOT used as the title — the default header shows the
+      // app name + version (from PackageInfo) instead.
+      expect(find.widgetWithText(AppBar, 'Alpha'), findsNothing);
+      expect(find.widgetWithText(AppBar, 'Beta'), findsNothing);
+    });
 
-      await tester.tap(find.text('Beta'));
-      await tester.pumpAndSettle();
+    testWidgets('custom appBar overrides the default app-name header', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AppShell(
+            showAppBar: true, // ignored when appBar is supplied
+            appBar: AppBar(title: const Text('Custom')),
+            tabs: const [
+              AppShellTab(label: 'One', icon: Icons.abc, body: SizedBox()),
+              AppShellTab(label: 'Two', icon: Icons.abc, body: SizedBox()),
+            ],
+          ),
+        ),
+      );
 
-      expect(find.widgetWithText(AppBar, 'Beta'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Custom'), findsOneWidget);
     });
 
     testWidgets('bannerAboveBody renders above the tab body', (tester) async {
