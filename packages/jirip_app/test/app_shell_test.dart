@@ -33,9 +33,41 @@ void main() {
       await tester.tap(find.text('Two'));
       await tester.pumpAndSettle();
 
-      final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(bar.selectedIndex, 1);
       expect(find.text('body-two'), findsOneWidget);
+    });
+
+    testWidgets('showLabels:false hides tab labels in the nav bar', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AppShell(
+            showLabels: false,
+            tabs: [
+              AppShellTab(
+                label: 'Alpha',
+                icon: Icons.looks_one,
+                body: Text('body-alpha'),
+              ),
+              AppShellTab(
+                label: 'Beta',
+                icon: Icons.looks_two,
+                body: Text('body-beta'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      // No label text rendered anywhere — the labels would normally appear
+      // both above the icons and from Semantics, but the actual painted
+      // Text widget is gone.
+      expect(find.text('Alpha'), findsNothing);
+      expect(find.text('Beta'), findsNothing);
+      // Tabs are still tappable via their icon.
+      await tester.tap(find.byIcon(Icons.looks_two));
+      await tester.pumpAndSettle();
+      expect(find.text('body-beta'), findsOneWidget);
     });
 
     testWidgets('preserves tab state across switches', (tester) async {

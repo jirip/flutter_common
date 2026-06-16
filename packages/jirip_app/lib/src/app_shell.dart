@@ -27,9 +27,14 @@ class AppShellTab {
 
 /// Bottom-tab scaffold shared by Jirip's Flutter apps.
 ///
-/// Renders a [Scaffold] with a Material 3 [NavigationBar] and an
-/// [IndexedStack] body so each tab keeps its widget tree (scroll position,
-/// in-progress state) across switches.
+/// Renders a [Scaffold] with a custom bottom-nav bar and an [IndexedStack]
+/// body so each tab keeps its widget tree (scroll position, in-progress
+/// state) across switches.
+///
+/// The bar deliberately departs from the stock Material 3 [NavigationBar]:
+/// no pill behind the selected icon, the selected icon scales up, the ripple
+/// covers the entire tab slot, and the bar is a compact 70 dp tall. Toggle
+/// the text labels per app with [showLabels].
 ///
 /// AppBar choices:
 ///   * [appBar] — caller-supplied [PreferredSizeWidget]; used as-is.
@@ -56,6 +61,10 @@ class AppShell extends StatefulWidget {
   /// use is an `UpdateBanner` so the banner sits above every tab.
   final Widget? bannerAboveBody;
 
+  /// When `true`, each tab shows its [AppShellTab.label] under the icon.
+  /// When `false`, the bar is icon-only. Defaults to `true`.
+  final bool showLabels;
+
   /// Notified with the new index whenever the user switches tabs.
   final ValueChanged<int>? onTabChanged;
 
@@ -66,6 +75,7 @@ class AppShell extends StatefulWidget {
     this.appBar,
     this.showAppBar = false,
     this.bannerAboveBody,
+    this.showLabels = true,
     this.onTabChanged,
   });
 
@@ -106,17 +116,118 @@ class _AppShellState extends State<AppShell> {
                 Expanded(child: body),
               ],
             ),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: _BottomNav(
+        tabs: tabs,
         selectedIndex: _index,
-        onDestinationSelected: _select,
-        destinations: [
-          for (final t in tabs)
-            NavigationDestination(
-              icon: Icon(t.icon),
-              selectedIcon: Icon(t.selectedIcon ?? t.icon),
-              label: t.label,
-            ),
-        ],
+        showLabels: widget.showLabels,
+        onSelected: _select,
+      ),
+    );
+  }
+}
+
+/// Custom bottom-nav bar — full-slot ripple, primary-tint selection,
+/// icon scale-up on selection, optional text labels, 70 dp tall.
+class _BottomNav extends StatelessWidget {
+  static const double _height = 70;
+  static const double _iconSize = 24;
+  static const double _selectedIconSize = 28;
+  static const double _labelFontSize = 11;
+
+  final List<AppShellTab> tabs;
+  final int selectedIndex;
+  final bool showLabels;
+  final ValueChanged<int> onSelected;
+
+  const _BottomNav({
+    required this.tabs,
+    required this.selectedIndex,
+    required this.showLabels,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: _height,
+          child: Row(
+            children: [
+              for (var i = 0; i < tabs.length; i++)
+                Expanded(
+                  child: _BottomNavItem(
+                    tab: tabs[i],
+                    selected: i == selectedIndex,
+                    showLabel: showLabels,
+                    iconSize: _iconSize,
+                    selectedIconSize: _selectedIconSize,
+                    labelFontSize: _labelFontSize,
+                    onTap: () => onSelected(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomNavItem extends StatelessWidget {
+  final AppShellTab tab;
+  final bool selected;
+  final bool showLabel;
+  final double iconSize;
+  final double selectedIconSize;
+  final double labelFontSize;
+  final VoidCallback onTap;
+
+  const _BottomNavItem({
+    required this.tab,
+    required this.selected,
+    required this.showLabel,
+    required this.iconSize,
+    required this.selectedIconSize,
+    required this.labelFontSize,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = selected ? scheme.primary : scheme.onSurfaceVariant;
+    final icon = selected ? (tab.selectedIcon ?? tab.icon) : tab.icon;
+    final size = selected ? selectedIconSize : iconSize;
+
+    return InkWell(
+      onTap: onTap,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: tab.label,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: size),
+            if (showLabel) ...[
+              const SizedBox(height: 4),
+              Text(
+                tab.label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: labelFontSize,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

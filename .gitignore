@@ -2,6 +2,7 @@
 *.iml
 .idea/
 .vscode/
+.claude/
 
 # Dart / Flutter
 .dart_tool/

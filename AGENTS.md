@@ -79,6 +79,9 @@ AppShell(
   // showAppBar: true renders an AppBar with `<appName> v<version>` from
   // PackageInfo. Override with `appBar:` for a custom one.
   showAppBar: true,
+  // Set false for an icon-only bar (Material 3 NavigationBar look without
+  // the labels). Default is true.
+  showLabels: true,
   bannerAboveBody: UpdateBanner(updater: updater, style: AppTheme.bannerStyle),
   tabs: const [
     AppShellTab(
@@ -110,6 +113,12 @@ Rules:
 - **The default AppBar shows `<appName> v<version>` from `PackageInfo`** —
   the version is the clean semver, with no build number. No app-side
   wiring needed. Pass `appBar:` to override entirely.
+- **The bottom bar is a 70 dp custom widget**, not the stock Material 3
+  `NavigationBar`. Selection is shown with `primary` tint and an icon
+  scale-up (24 → 28 dp); there is no pill behind the icon. The ripple
+  covers the entire tab slot. Pass `showLabels: false` to hide text and
+  get an icon-only bar — only do that when every tab's icon is
+  universally recognisable.
 - **The banner slot is for one persistent widget**, typically
   `UpdateBanner`. If you need to show a snackbar/dialog, route it
   through the surrounding `Scaffold`/`Overlay`, not the shell.
