@@ -103,7 +103,7 @@ void main() {
       expect(find.text('count:2'), findsOneWidget);
     });
 
-    testWidgets('showAppBar renders the default app-name AppBar', (
+    testWidgets('showAppBar renders the slim version header, not an AppBar', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -118,11 +118,8 @@ void main() {
         ),
       );
 
-      expect(find.byType(AppBar), findsOneWidget);
-      // Tab label is NOT used as the title — the default header shows the
-      // app name + version (from PackageInfo) instead.
-      expect(find.widgetWithText(AppBar, 'Alpha'), findsNothing);
-      expect(find.widgetWithText(AppBar, 'Beta'), findsNothing);
+      // No Material AppBar in the slim path — just a 24 dp caption row.
+      expect(find.byType(AppBar), findsNothing);
     });
 
     testWidgets('custom appBar overrides the default app-name header', (

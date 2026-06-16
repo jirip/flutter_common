@@ -36,12 +36,15 @@ class AppShellTab {
 /// covers the entire tab slot, and the bar is a compact 70 dp tall. Toggle
 /// the text labels per app with [showLabels].
 ///
-/// AppBar choices:
-///   * [appBar] — caller-supplied [PreferredSizeWidget]; used as-is.
-///   * [showAppBar] — when `true` and [appBar] is null, renders the default
-///     `<appName> v<version>` header pulled from [PackageInfo]. The version
-///     is the clean semver (no build number).
-///   * neither — no AppBar.
+/// Header choices:
+///   * [appBar] — caller-supplied [PreferredSizeWidget]; used as-is. Use this
+///     when you need a leading icon, actions, or a custom title.
+///   * [showAppBar] — when `true` and [appBar] is null, renders a *slim*
+///     single-line caption with `<appName> v<version>` pulled from
+///     [PackageInfo] (~24 dp tall, `labelSmall`, muted). The version is the
+///     clean semver (no build number). Because the slim header carries no
+///     actions, drop into the [appBar] slot the moment you need any.
+///   * neither — no header at all.
 ///
 /// Colours come from the surrounding [Theme]; [AppShell] never paints its own.
 class AppShell extends StatefulWidget {
@@ -53,8 +56,10 @@ class AppShell extends StatefulWidget {
   /// Custom AppBar. Takes precedence over [showAppBar].
   final PreferredSizeWidget? appBar;
 
-  /// When `true` and [appBar] is null, [AppShell] renders an [AppBar] showing
-  /// `<appName> v<version>` pulled from [PackageInfo]. Defaults to `false`.
+  /// When `true` and [appBar] is null, [AppShell] renders the slim single-
+  /// line caption `<appName> v<version>` (~24 dp, `labelSmall`, muted)
+  /// pulled from [PackageInfo]. Defaults to `false`. Drop a full [AppBar]
+  /// into [appBar] when you need actions or a leading icon.
   final bool showAppBar;
 
   /// Widget rendered between the AppBar (if any) and the tab body — typical
@@ -98,7 +103,7 @@ class _AppShellState extends State<AppShell> {
 
     final PreferredSizeWidget? appBar =
         widget.appBar ??
-        (widget.showAppBar ? const _AppNameVersionAppBar() : null);
+        (widget.showAppBar ? const _SlimVersionHeader() : null);
 
     final body = IndexedStack(
       index: _index,
@@ -233,21 +238,24 @@ class _BottomNavItem extends StatelessWidget {
   }
 }
 
-/// Default AppBar used when `showAppBar: true` and no custom [AppBar] is
-/// supplied. Title is `<appName> v<version>`, with the version rendered
-/// smaller than the name. Values come from [PackageInfo].
-class _AppNameVersionAppBar extends StatefulWidget
-    implements PreferredSizeWidget {
-  const _AppNameVersionAppBar();
+/// Slim header used when `showAppBar: true` and no custom [AppBar] is
+/// supplied. Renders a single `labelSmall` line `<appName> v<version>` in
+/// `onSurfaceVariant` (muted), ~24 dp tall. Carries no actions or leading
+/// icon — drop a full [AppBar] into [AppShell.appBar] for that.
+class _SlimVersionHeader extends StatefulWidget implements PreferredSizeWidget {
+  /// One line of `labelSmall` text + 4 dp top/bottom padding ≈ 24 dp.
+  static const double _height = 24;
+
+  const _SlimVersionHeader();
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(_height);
 
   @override
-  State<_AppNameVersionAppBar> createState() => _AppNameVersionAppBarState();
+  State<_SlimVersionHeader> createState() => _SlimVersionHeaderState();
 }
 
-class _AppNameVersionAppBarState extends State<_AppNameVersionAppBar> {
+class _SlimVersionHeaderState extends State<_SlimVersionHeader> {
   String? _appName;
   String? _version;
 
@@ -265,26 +273,29 @@ class _AppNameVersionAppBarState extends State<_AppNameVersionAppBar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final name = _appName ?? '';
     final version = _version;
-    return AppBar(
-      title: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(text: name),
-            if (version != null && version.isNotEmpty) ...[
-              const TextSpan(text: '  '),
-              TextSpan(
-                text: 'v$version',
-                style: TextStyle(
-                  fontSize:
-                      (DefaultTextStyle.of(context).style.fontSize ?? 16) * 0.7,
-                  fontWeight: FontWeight.w400,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+    final text = (version == null || version.isEmpty)
+        ? name
+        : '$name v$version';
+    return SafeArea(
+      bottom: false,
+      child: SizedBox(
+        height: _SlimVersionHeader._height,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              text,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-            ],
-          ],
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ),
       ),
     );

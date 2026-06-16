@@ -110,9 +110,12 @@ Rules:
 - **Do not nest a second `Scaffold` inside an `AppShellTab.body`.** Use
   a plain widget (or a custom AppBar on the body if you really need a
   per-tab one — but prefer `AppShell.showAppBar` or `AppShell.appBar`).
-- **The default AppBar shows `<appName> v<version>` from `PackageInfo`** —
-  the version is the clean semver, with no build number. No app-side
-  wiring needed. Pass `appBar:` to override entirely.
+- **`showAppBar: true` is now a slim 24 dp caption**, not a Material
+  AppBar. It shows `<appName> v<version>` in `labelSmall` muted text,
+  with no actions and no leading icon. The rule: empty headers shouldn't
+  waste 56 dp. The moment you need an action or a leading widget, pass
+  a full `AppBar` into the `appBar:` slot instead — that mode still
+  renders the standard 56 dp Material AppBar.
 - **The bottom bar is a 70 dp custom widget**, not the stock Material 3
   `NavigationBar`. Selection is shown with `primary` tint and an icon
   scale-up (24 → 28 dp); there is no pill behind the icon. The ripple
