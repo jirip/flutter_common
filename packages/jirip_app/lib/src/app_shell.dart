@@ -13,6 +13,14 @@ class AppShellTab {
   /// omit it for an unchanged look.
   final IconData? selectedIcon;
 
+  /// Optional small widget overlaid on the top-right corner of the tab's
+  /// icon (e.g. a status dot or a tiny badge). Null renders nothing, so the
+  /// tab looks exactly as before. The host decides what it is and when to
+  /// show it — pass null to hide it. For a live badge, rebuild the [AppShell]
+  /// (e.g. wrap it in a [ListenableBuilder]) so a new [AppShellTab] with an
+  /// updated [iconBadge] is supplied.
+  final Widget? iconBadge;
+
   /// Body widget for this tab. Kept alive across tab switches by the
   /// [IndexedStack] inside [AppShell].
   final Widget body;
@@ -22,6 +30,7 @@ class AppShellTab {
     required this.icon,
     required this.body,
     this.selectedIcon,
+    this.iconBadge,
   });
 }
 
@@ -217,7 +226,20 @@ class _BottomNavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: size),
+            if (tab.iconBadge == null)
+              Icon(icon, color: color, size: size)
+            else
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, color: color, size: size),
+                  Positioned(
+                    top: -2,
+                    right: -4,
+                    child: tab.iconBadge!,
+                  ),
+                ],
+              ),
             if (showLabel) ...[
               const SizedBox(height: 4),
               Text(
