@@ -79,6 +79,12 @@ class AppShell extends StatefulWidget {
   /// When `false`, the bar is icon-only. Defaults to `true`.
   final bool showLabels;
 
+  /// When `true` (default), the bottom navigation bar is rendered. Set
+  /// `false` for a single-screen app where a one-item bar would be noise;
+  /// the shell then keeps only the header + banner + body. Tab switching
+  /// is unavailable in this mode, so use it only with a single tab.
+  final bool showBottomNav;
+
   /// Notified with the new index whenever the user switches tabs.
   final ValueChanged<int>? onTabChanged;
 
@@ -90,6 +96,7 @@ class AppShell extends StatefulWidget {
     this.showAppBar = false,
     this.bannerAboveBody,
     this.showLabels = true,
+    this.showBottomNav = true,
     this.onTabChanged,
   });
 
@@ -130,12 +137,14 @@ class _AppShellState extends State<AppShell> {
                 Expanded(child: body),
               ],
             ),
-      bottomNavigationBar: _BottomNav(
-        tabs: tabs,
-        selectedIndex: _index,
-        showLabels: widget.showLabels,
-        onSelected: _select,
-      ),
+      bottomNavigationBar: widget.showBottomNav
+          ? _BottomNav(
+              tabs: tabs,
+              selectedIndex: _index,
+              showLabels: widget.showLabels,
+              onSelected: _select,
+            )
+          : null,
     );
   }
 }

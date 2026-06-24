@@ -172,6 +172,28 @@ void main() {
       final bodyTop = tester.getTopLeft(find.text('body')).dy;
       expect(bannerTop, lessThan(bodyTop));
     });
+
+    testWidgets('showBottomNav false hides the navigation bar', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AppShell(
+            showBottomNav: false,
+            tabs: [
+              AppShellTab(
+                label: 'Only',
+                icon: Icons.looks_one,
+                body: Text('body-only'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.text('body-only'), findsOneWidget);
+      // The tab label is only rendered by the bottom bar, so its absence
+      // confirms the bar is gone.
+      expect(find.text('Only'), findsNothing);
+    });
   });
 }
 
